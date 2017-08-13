@@ -71,12 +71,13 @@ class FactoryRepository
         if (empty($searchStr)){
             return [];
         }
-
+/*
         $aliasInfo = $this->aliasModel->query()
             ->where('alias', $searchStr)
             ->get()->toArray();
 
         $classify = array_pluck($aliasInfo, 'classify_name');
+
 
         if (empty($classify)){
             return[];
@@ -85,7 +86,25 @@ class FactoryRepository
         $searchResult = $this->factoryModel->query()
             ->whereIn('classify_name',$classify)
             ->orderBy('collection', 'desc')
+            ->get();*/
+
+        $factoryRelation = $this->classifyModel->query()
+            ->where('small_classify','like','%'.$searchStr.'%')
+            ->first();
+
+        $factoryId = array_get($factoryRelation, 'factory_id', '');
+
+        $classifyInfo = $this->classifyModel->query()
+            ->where('factory_id', $factoryId)
             ->get();
+
+        $classify = array_pluck($classifyInfo->toArray(), 'small_classify');
+
+        $searchResult = $this->factoryModel->query()
+            ->where('id',$factoryId)
+            ->first();
+
+        $searchResult->classify = $classify;
 
         return $searchResult;
 

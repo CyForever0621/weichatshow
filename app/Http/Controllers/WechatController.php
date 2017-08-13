@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Service\FactoryService;
 use EasyWeChat\Foundation\Application;
 use GuzzleHttp\Psr7\Request;
 use Log;
@@ -9,10 +10,15 @@ use Log;
 class WechatController extends Controller
 {
     private $wechat;
+    private $factoryService;
 
-    public function __construct(Application $wechat)
+    public function __construct(
+        Application    $wechat,
+        FactoryService $factoryService
+    )
     {
-        $this->wechat = $wechat;
+        $this->wechat         = $wechat;
+        $this->factoryService = $factoryService;
     }
     /**
      * 处理微信的请求消息
@@ -40,10 +46,32 @@ class WechatController extends Controller
                     return '收到事件消息';
                     break;
                 case 'text':
+                    $params = [
+                        'classify' => $message->Content
+                    ];
+
+                    $factoryInfo = $this->factoryService->searchFactory($params);
+
+                    $factoryId       = array_get($factoryInfo, 'id', 0);
+                    $factoryName     = array_get($factoryInfo, 'name', '');
+                    $factoryclassify = array_get($factoryInfo, 'classify', '');
+
+                    if ($factoryId == 0 ){
+                        return '没有找到相关企业,我们正在努力中，敬请期待';
+                    }
+
+
                     //$text = new Text(['content' => '您好！overtrue。']);
-                    $templateId = 'mbNYY_i4uwgLwVSCwAWzexI3ozpBBvAVQrxBI0FnYic';
-                    $url = 'http://liucheng.nat300.top/api/detail/factory?factory_id=800080';
-                    $data = [];
+                    $templateId = 'K0gJlkgXoCoKB72hXHryP_gU5CoTYSHLCUY3Us7V3wQ';
+                    $url = 'http://liucheng.nat300.top/test?params=' . $message->Content;
+                    $classify = "\n\n";
+                    foreach ($factoryclassify as $item){
+                        $classify = $classify . $item ."\n\n";
+                    }
+                    $data = [
+                        'factory_name' => $factoryName . "\n\n",
+                        'classify'     => $classify
+                    ];
 
                     $userId = $message->FromUserName;
                     //return $userId;
@@ -72,8 +100,8 @@ class WechatController extends Controller
                     return '收到其它消息';
                     break;
             }
-            return json_encode($message);
-            return "欢迎关注 sdfsdfsdsdf！";
+
+            return "欢迎关注 金丝银网，请尝试输入文字来获得丝网企业信息！";
         });
 
         Log::info('return response.');

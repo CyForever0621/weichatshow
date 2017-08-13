@@ -51,7 +51,7 @@ class FactoryController extends Controller
         ],[
             'classify.required' => '小类必须传'
             ]);
-        dd('sdf');
+
         $params = $request->all();
 
         $result = $this->factoryService->searchFactory($params);
